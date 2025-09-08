@@ -32,11 +32,13 @@ jobs:
         python -m pip install --upgrade pip
         cd crates/rust-py-bindings
         pip install maturin pytest polars>=0.20.0
+        # 确保pip安装到系统Python，不需要虚拟环境
         
     - name: Build and install package
       run: |
         cd crates/rust-py-bindings
-        maturin develop
+        maturin build --release
+        pip install target/wheels/*.whl
         
     - name: Run tests
       run: |

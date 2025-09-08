@@ -33,7 +33,7 @@ jobs:
     - name: Build wheels
       run: |
         cd crates/rust-py-bindings
-        maturin build --release --out ../../dist/
+        maturin build --release --out ../../dist/ --find-interpreter
         
     - name: Upload wheels
       uses: actions/upload-artifact@v3
