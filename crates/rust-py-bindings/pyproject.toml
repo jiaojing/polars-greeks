@@ -7,7 +7,7 @@ name = "polars-greeks"
 version = "0.1.0" 
 description = "High-performance Greeks calculation plugin for Polars"
 authors = [
-    {name = "derek.jiao", email = "derek.jiao@signalplus.com"}
+    {name = "derek.jiao", email = "derek.jiao@xxx.com"}
 ]
 license = {text = "MIT"}
 requires-python = ">=3.8"

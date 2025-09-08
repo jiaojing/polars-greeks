@@ -1,7 +1,7 @@
 """Test Greeks calculations"""
 
 import polars as pl
-import polars_greeks
+import polars_greeks as greeks
 import pytest
 from math import isclose
 
@@ -17,7 +17,8 @@ def test_basic_greeks_calculation():
     })
     
     result = df.select(
-        pl.col('spot').greeks.calc_basic(
+        greeks.calc_basic(
+            pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
             volatility=pl.col('volatility'),
@@ -54,7 +55,8 @@ def test_put_call_parity():
     
     # Call delta
     call_result = df.select(
-        pl.col('spot').greeks.calc_basic(
+        greeks.calc_basic(
+            pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
             volatility=pl.col('volatility'),
@@ -69,7 +71,8 @@ def test_put_call_parity():
     
     # Put delta  
     put_result = df.select(
-        pl.col('spot').greeks.calc_basic(
+        greeks.calc_basic(
+            pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
             volatility=pl.col('volatility'),
@@ -102,7 +105,8 @@ def test_multiple_strikes():
     })
     
     result = df.select(
-        pl.col('spot').greeks.calc_basic(
+        greeks.calc_basic(
+            pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
             volatility=pl.col('volatility'),

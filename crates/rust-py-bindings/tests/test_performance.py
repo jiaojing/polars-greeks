@@ -1,7 +1,7 @@
 """Performance tests for Greeks calculations"""
 
 import polars as pl
-import polars_greeks
+import polars_greeks as greeks
 import time
 import numpy as np
 
@@ -25,7 +25,8 @@ def test_performance_large_dataset():
     start_time = time.time()
     
     result = df.select(
-        pl.col('spot').greeks.calc_basic(
+        greeks.calc_basic(
+            pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
             volatility=pl.col('volatility'),
@@ -67,7 +68,8 @@ def test_memory_usage():
     print(f"Testing memory usage on {n:,} identical scenarios...")
     
     result = df.select(
-        pl.col('spot').greeks.calc_basic(
+        greeks.calc_basic(
+            pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
             volatility=pl.col('volatility'),
