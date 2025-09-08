@@ -24,16 +24,10 @@ jobs:
     - name: Install maturin and twine
       run: pip install maturin[patchelf] twine
       
-    - name: Build wheel
-      run: |
-        cd crates/rust-py-bindings  
-        maturin build --release --find-interpreter
-        
-    - name: Publish to PyPI
+    - name: Build and publish wheel
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         cd crates/rust-py-bindings
-        ls -la target/wheels/
-        twine upload target/wheels/*.whl
+        maturin publish --release
