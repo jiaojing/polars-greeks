@@ -35,4 +35,5 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         cd crates/rust-py-bindings
-        twine upload target/wheels/*
+        ls -la target/wheels/
+        twine upload target/wheels/*.whl

@@ -27,8 +27,7 @@ jobs:
     - name: Build and install package
       run: |
         cd crates/rust-py-bindings
-        maturin build --release
-        pip install target/wheels/*.whl
+        maturin develop --release
         
     - name: Run Python tests
       run: |
