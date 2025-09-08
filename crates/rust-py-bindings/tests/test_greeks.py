@@ -17,7 +17,7 @@ def test_basic_greeks_calculation():
     })
     
     result = df.select(
-        greeks.calc_basic(
+        greeks.df(
             pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
@@ -55,7 +55,7 @@ def test_put_call_parity():
     
     # Call delta
     call_result = df.select(
-        greeks.calc_basic(
+        greeks.df(
             pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
@@ -71,7 +71,7 @@ def test_put_call_parity():
     
     # Put delta  
     put_result = df.select(
-        greeks.calc_basic(
+        greeks.df(
             pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
@@ -105,7 +105,7 @@ def test_multiple_strikes():
     })
     
     result = df.select(
-        greeks.calc_basic(
+        greeks.df(
             pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),

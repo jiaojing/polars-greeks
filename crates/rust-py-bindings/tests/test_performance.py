@@ -25,7 +25,7 @@ def test_performance_large_dataset():
     start_time = time.time()
     
     result = df.select(
-        greeks.calc_basic(
+        greeks.df(
             pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),
@@ -68,7 +68,7 @@ def test_memory_usage():
     print(f"Testing memory usage on {n:,} identical scenarios...")
     
     result = df.select(
-        greeks.calc_basic(
+        greeks.df(
             pl.col('spot'),
             strike=pl.col('strike'),
             time_to_expiry=pl.col('time_to_expiry'),

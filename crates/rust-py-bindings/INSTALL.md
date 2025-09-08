@@ -64,7 +64,7 @@ source ~/.cargo/env
 
 ```python
 import polars as pl
-from polars_greeks import extension
+import polars_greeks as greeks
 
 # 创建期权数据
 df = pl.DataFrame({
@@ -77,7 +77,8 @@ df = pl.DataFrame({
 
 # 计算Greeks
 result = df.with_columns([
-    pl.col("spot").greeks.calc_basic(
+    greeks.df(
+        pl.col("spot"),
         strike=pl.col("strike"),
         time_to_expiry=pl.col("time_to_expiry"),
         volatility=pl.col("volatility"),
