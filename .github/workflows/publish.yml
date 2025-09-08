@@ -36,4 +36,4 @@ jobs:
       run: |
         cd crates/rust-py-bindings
         ls -la target/wheels/
-        python -m twine upload target/wheels/*.whl
+        twine upload target/wheels/*.whl
