@@ -5,15 +5,40 @@ build-backend = "maturin"
 [project]
 name = "polars-greeks"
 version = "0.1.0" 
-description = "High-performance Greeks calculation plugin for Polars"
+description = "High-performance Black-Scholes options pricing and Greeks calculation plugin for Polars"
+readme = "README.md"
 authors = [
-    {name = "derek.jiao", email = "derek.jiao@xxx.com"}
+    {name = "derek.jiao"}
 ]
 license = {text = "MIT"}
 requires-python = ">=3.8"
 dependencies = [
     "polars>=0.20.0",
 ]
+keywords = [
+    "polars", "options", "black-scholes", "greeks", "finance", "quantitative", "rust"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers", 
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8", 
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/jiaojing/polars-greeks"
+Repository = "https://github.com/jiaojing/polars-greeks"
+Issues = "https://github.com/jiaojing/polars-greeks/issues"
 
 [tool.maturin]
 module-name = "polars_greeks._internal"
