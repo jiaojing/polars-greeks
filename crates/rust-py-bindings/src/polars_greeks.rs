@@ -19,6 +19,7 @@ struct GreeksFlags {
     zomma: bool,
 }
 
+
 impl GreeksFlags {
     fn from_kwargs(kwargs: &GreeksKwargs) -> Self {
         let greeks = &kwargs.greeks;
