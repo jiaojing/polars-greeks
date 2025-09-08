@@ -21,8 +21,13 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       
-    - name: Install dependencies
-      run: pip install maturin[patchelf] pytest polars>=0.20.0
+    - name: Create virtual environment and install dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install maturin[patchelf] pytest polars>=0.20.0
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+        echo "PATH=$PATH" >> $GITHUB_ENV
         
     - name: Build and install package
       run: |

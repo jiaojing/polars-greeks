@@ -27,7 +27,7 @@ jobs:
     - name: Build wheel
       run: |
         cd crates/rust-py-bindings  
-        maturin build --release
+        maturin build --release --find-interpreter
         
     - name: Publish to PyPI
       env:
@@ -36,4 +36,4 @@ jobs:
       run: |
         cd crates/rust-py-bindings
         ls -la target/wheels/
-        twine upload target/wheels/*.whl
+        python -m twine upload target/wheels/*.whl
