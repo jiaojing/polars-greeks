@@ -56,6 +56,20 @@ impl GreeksVec {
         self.zomma.as_mut().map(|vec| vec.push(bs.zomma()));
     }
 
+    fn collect_by_default(&mut self) {
+        // 推送NaN保持长度一致
+        self.delta.as_mut().map(|vec| vec.push(f64::NAN));
+        self.gamma.as_mut().map(|vec| vec.push(f64::NAN));
+        self.theta.as_mut().map(|vec| vec.push(f64::NAN));
+        self.vega.as_mut().map(|vec| vec.push(f64::NAN));
+        self.rho.as_mut().map(|vec| vec.push(f64::NAN));
+        self.vanna.as_mut().map(|vec| vec.push(f64::NAN));
+        self.volga.as_mut().map(|vec| vec.push(f64::NAN));
+        self.charm.as_mut().map(|vec| vec.push(f64::NAN));
+        self.speed.as_mut().map(|vec| vec.push(f64::NAN));
+        self.zomma.as_mut().map(|vec| vec.push(f64::NAN));
+    }
+
     fn to_struct_series(self) -> PolarsResult<Series> {
         let mut series_vec = Vec::new();
 
@@ -206,6 +220,9 @@ pub fn calc_basic(inputs: &[Series], kwargs: GreeksKwargs) -> PolarsResult<Serie
 
                 if let Ok(bs) = BlackScholesModel::new(s, k, t, vol, r, q) {
                     greeks_vec.collect_by(&bs, option_type);
+                } else {
+                    // 推送默认值或NaN，保持长度一致
+                    greeks_vec.collect_by_default();
                 }
             },
         );
