@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "polars-greeks"
-version = "0.1.0" 
+version = "0.1.1"
 description = "High-performance Black-Scholes options pricing and Greeks calculation plugin for Polars"
 readme = "README.md"
 authors = [
