@@ -9,6 +9,19 @@ use rust_core::black_scholes::{BlackScholesModel, OptionType};
 #[global_allocator]
 static ALLOC: PolarsAllocator = PolarsAllocator::new();
 
+pub trait Apply: Sized {
+    fn apply<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut Self),
+    {
+        f(&mut self);
+        self
+    }
+}
+
+impl<T> Apply for T {}
+
+
 #[pyfunction]
 fn calc(
     spot: f64,

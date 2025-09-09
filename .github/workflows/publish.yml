@@ -22,11 +22,15 @@ jobs:
         sccache: 'true'
         manylinux: auto
         working-directory: crates/rust-py-bindings
+    - name: List built files
+      run: |
+        ls -la crates/rust-py-bindings/dist/
+        ls -la dist/ || echo "No dist in root"
     - name: Upload wheels
       uses: actions/upload-artifact@v4
       with:
         name: wheels-linux
-        path: dist
+        path: crates/rust-py-bindings/dist
 
   windows:
     runs-on: windows-latest
@@ -46,7 +50,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: wheels-windows
-        path: dist
+        path: crates/rust-py-bindings/dist
 
   macos:
     runs-on: macos-latest
@@ -66,7 +70,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: wheels-macos
-        path: dist
+        path: crates/rust-py-bindings/dist
 
   sdist:
     runs-on: ubuntu-latest
@@ -82,7 +86,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: wheels-sdist
-        path: dist
+        path: crates/rust-py-bindings/dist
 
   release:
     name: Release
@@ -91,6 +95,10 @@ jobs:
     needs: [linux, windows, macos, sdist]
     steps:
     - uses: actions/download-artifact@v4
+    - name: List downloaded files
+      run: |
+        find . -name "*.whl" -o -name "*.tar.gz"
+        ls -la wheels-*/
     - name: Publish to PyPI
       uses: PyO3/maturin-action@v1
       env:

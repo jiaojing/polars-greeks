@@ -1,133 +1,97 @@
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
-use rust_core::black_scholes::{BlackScholesModel, Greeks, OptionType};
+use rust_core::black_scholes::{BlackScholesModel, OptionType};
 use serde::Deserialize;
 use std::collections::HashSet;
 
-
-#[derive(Debug, Clone)]
-struct GreeksFlags {
-    delta: bool,
-    gamma: bool,
-    theta: bool,
-    vega: bool,
-    rho: bool,
-    vanna: bool,
-    volga: bool,
-    charm: bool,
-    speed: bool,
-    zomma: bool,
-}
-
-
-impl GreeksFlags {
-    fn from_kwargs(kwargs: &GreeksKwargs) -> Self {
-        let greeks = &kwargs.greeks;
-        Self {
-            delta: greeks.contains(&"delta".to_string()),
-            gamma: greeks.contains(&"gamma".to_string()),
-            theta: greeks.contains(&"theta".to_string()),
-            vega: greeks.contains(&"vega".to_string()),
-            rho: greeks.contains(&"rho".to_string()),
-            vanna: greeks.contains(&"vanna".to_string()),
-            volga: greeks.contains(&"volga".to_string()),
-            charm: greeks.contains(&"charm".to_string()),
-            speed: greeks.contains(&"speed".to_string()),
-            zomma: greeks.contains(&"zomma".to_string()),
-        }
-    }
-}
-
-fn greeks_from_bs(bs: &BlackScholesModel, option_type: OptionType, flags: &GreeksFlags) -> Greeks {
-    Greeks {
-        delta: if flags.delta {
-            bs.delta(option_type)
-        } else {
-            0.0
-        },
-        gamma: if flags.gamma { bs.gamma() } else { 0.0 },
-        theta: if flags.theta {
-            bs.theta(option_type)
-        } else {
-            0.0
-        },
-        vega: if flags.vega { bs.vega() } else { 0.0 },
-        rho: if flags.rho { bs.rho(option_type) } else { 0.0 },
-        vanna: if flags.vanna { bs.vanna() } else { 0.0 },
-        volga: if flags.volga { bs.volga() } else { 0.0 },
-        charm: if flags.charm {
-            bs.charm(option_type)
-        } else {
-            0.0
-        },
-        speed: if flags.speed { bs.speed() } else { 0.0 },
-        zomma: if flags.zomma { bs.zomma() } else { 0.0 },
-    }
-}
-
 struct GreeksVec {
-    delta: Vec<f64>,
-    gamma: Vec<f64>,
-    theta: Vec<f64>,
-    vega: Vec<f64>,
-    rho: Vec<f64>,
-    vanna: Vec<f64>,
-    volga: Vec<f64>,
-    charm: Vec<f64>,
-    speed: Vec<f64>,
-    zomma: Vec<f64>,
+    len: usize,
+    delta: Option<Vec<f64>>,
+    gamma: Option<Vec<f64>>,
+    theta: Option<Vec<f64>>,
+    vega: Option<Vec<f64>>,
+    rho: Option<Vec<f64>>,
+    vanna: Option<Vec<f64>>,
+    volga: Option<Vec<f64>>,
+    charm: Option<Vec<f64>>,
+    speed: Option<Vec<f64>>,
+    zomma: Option<Vec<f64>>,
 }
 
 impl GreeksVec {
-    fn with_capacity(len: usize) -> Self {
+    fn from_kwargs(len: usize, kwargs: &GreeksKwargs) -> Self {
+        let maybe_vec = |name: &str| kwargs.hash_greeks(name).then(|| Vec::with_capacity(len));
+
         Self {
-            delta: Vec::with_capacity(len),
-            gamma: Vec::with_capacity(len),
-            theta: Vec::with_capacity(len),
-            vega: Vec::with_capacity(len),
-            rho: Vec::with_capacity(len),
-            vanna: Vec::with_capacity(len),
-            volga: Vec::with_capacity(len),
-            charm: Vec::with_capacity(len),
-            speed: Vec::with_capacity(len),
-            zomma: Vec::with_capacity(len),
+            len,
+            delta: maybe_vec("delta"),
+            gamma: maybe_vec("gamma"),
+            theta: maybe_vec("theta"),
+            vega: maybe_vec("vega"),
+            rho: maybe_vec("rho"),
+            vanna: maybe_vec("vanna"),
+            volga: maybe_vec("volga"),
+            charm: maybe_vec("charm"),
+            speed: maybe_vec("speed"),
+            zomma: maybe_vec("zomma"),
         }
     }
 
-    fn push(&mut self, greeks: Greeks) {
-        self.delta.push(greeks.delta);
-        self.gamma.push(greeks.gamma);
-        self.theta.push(greeks.theta);
-        self.vega.push(greeks.vega);
-        self.rho.push(greeks.rho);
-        self.vanna.push(greeks.vanna);
-        self.volga.push(greeks.volga);
-        self.charm.push(greeks.charm);
-        self.speed.push(greeks.speed);
-        self.zomma.push(greeks.zomma);
+    fn collect_by(&mut self, bs: &BlackScholesModel, option_type: OptionType) {
+        self.delta
+            .as_mut()
+            .map(|vec| vec.push(bs.delta(option_type)));
+        self.gamma.as_mut().map(|vec| vec.push(bs.gamma()));
+        self.theta
+            .as_mut()
+            .map(|vec| vec.push(bs.theta(option_type)));
+        self.vega.as_mut().map(|vec| vec.push(bs.vega()));
+        self.rho.as_mut().map(|vec| vec.push(bs.rho(option_type)));
+        self.vanna.as_mut().map(|vec| vec.push(bs.vanna()));
+        self.volga.as_mut().map(|vec| vec.push(bs.volga()));
+        self.charm
+            .as_mut()
+            .map(|vec| vec.push(bs.charm(option_type)));
+        self.speed.as_mut().map(|vec| vec.push(bs.speed()));
+        self.zomma.as_mut().map(|vec| vec.push(bs.zomma()));
     }
 
     fn to_struct_series(self) -> PolarsResult<Series> {
-        let row_count = self.delta.len();
+        let mut series_vec = Vec::new();
 
-        // 直接从Vec<f64>构造Series - 零拷贝move操作
-        let series_vec = vec![
-            Float64Chunked::from_vec("delta".into(), self.delta).into_series(),
-            Float64Chunked::from_vec("gamma".into(), self.gamma).into_series(),
-            Float64Chunked::from_vec("theta".into(), self.theta).into_series(),
-            Float64Chunked::from_vec("vega".into(), self.vega).into_series(),
-            Float64Chunked::from_vec("rho".into(), self.rho).into_series(),
-            Float64Chunked::from_vec("vanna".into(), self.vanna).into_series(),
-            Float64Chunked::from_vec("volga".into(), self.volga).into_series(),
-            Float64Chunked::from_vec("charm".into(), self.charm).into_series(),
-            Float64Chunked::from_vec("speed".into(), self.speed).into_series(),
-            Float64Chunked::from_vec("zomma".into(), self.zomma).into_series(),
-        ];
+        self.delta.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("delta".into(), vec).into_series());
+        });
+        self.gamma.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("gamma".into(), vec).into_series());
+        });
+        self.theta.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("theta".into(), vec).into_series());
+        });
+        self.vega.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("vega".into(), vec).into_series());
+        });
+        self.rho.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("rho".into(), vec).into_series());
+        });
+        self.vanna.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("vanna".into(), vec).into_series());
+        });
+        self.volga.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("volga".into(), vec).into_series());
+        });
+        self.charm.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("charm".into(), vec).into_series());
+        });
+        self.speed.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("speed".into(), vec).into_series());
+        });
+        self.zomma.map(|vec| {
+            series_vec.push(Float64Chunked::from_vec("zomma".into(), vec).into_series());
+        });
 
-        // ✅ 使用StructChunked::from_series正确构造Struct
         let struct_chunked =
-            StructChunked::from_series("all_greeks".into(), row_count, series_vec.iter())?;
-
+            StructChunked::from_series("greeks".into(), self.len, series_vec.iter())?;
         Ok(struct_chunked.into_series())
     }
 }
@@ -138,28 +102,55 @@ pub struct GreeksKwargs {
     pub greeks: HashSet<String>,
 }
 
+impl GreeksKwargs {
+    fn hash_greeks(&self, greek: impl Into<String>) -> bool {
+        self.greeks.contains(&greek.into())
+    }
+}
+
 fn default_greeks() -> HashSet<String> {
     HashSet::from(["vega".to_string(), "charm".to_string()])
 }
 
-fn infer_greeks_struct_schema(_input_fields: &[Field]) -> PolarsResult<Field> {
-    // 返回完整的Greeks结构体 - 包含所有可能的指标
-    let fields = vec![
-        Field::new("delta".into(), DataType::Float64),
-        Field::new("gamma".into(), DataType::Float64),
-        Field::new("theta".into(), DataType::Float64),
-        Field::new("vega".into(), DataType::Float64),
-        Field::new("rho".into(), DataType::Float64),
-        Field::new("vanna".into(), DataType::Float64),
-        Field::new("volga".into(), DataType::Float64),
-        Field::new("charm".into(), DataType::Float64),
-        Field::new("speed".into(), DataType::Float64),
-        Field::new("zomma".into(), DataType::Float64),
+fn infer_greeks_struct_schema(input_fields: &[Field], kwargs: GreeksKwargs) -> PolarsResult<Field> {
+    // 校验参数数量
+    if input_fields.len() != 7 {
+        polars_bail!(InvalidOperation: "Expected 7 input fields, got {}", input_fields.len());
+    }
+
+    // 校验前6个字段必须是Float64
+    for (i, field) in input_fields.iter().take(6).enumerate() {
+        if !matches!(field.dtype(), DataType::Float64) {
+            polars_bail!(InvalidOperation: "Field {} '{}' must be Float64, got {:?}", i, field.name(), field.dtype());
+        }
+    }
+
+    // 校验第7个字段必须是Boolean
+    if !matches!(input_fields[6].dtype(), DataType::Boolean) {
+        polars_bail!(InvalidOperation: "Field 6 '{}' must be Boolean, got {:?}", input_fields[6].name(), input_fields[6].dtype());
+    }
+
+    let valid_greeks = [
+        "delta", "gamma", "theta", "vega", "rho", "vanna", "volga", "charm", "speed", "zomma",
     ];
-    Ok(Field::new("all_greeks".into(), DataType::Struct(fields)))
+
+    // 校验Greek名称
+    for greek in &kwargs.greeks {
+        if !valid_greeks.contains(&greek.as_str()) {
+            polars_bail!(InvalidOperation: "Invalid Greek: '{}'", greek);
+        }
+    }
+
+    let fields: Vec<Field> = valid_greeks
+        .into_iter()
+        .filter(|&name| kwargs.hash_greeks(name))
+        .map(|name| Field::new(name.into(), DataType::Float64))
+        .collect();
+
+    Ok(Field::new("greeks".into(), DataType::Struct(fields)))
 }
 
-#[polars_expr(output_type_func=infer_greeks_struct_schema)]
+#[polars_expr(output_type_func_with_kwargs=infer_greeks_struct_schema)]
 pub fn calc_basic(inputs: &[Series], kwargs: GreeksKwargs) -> PolarsResult<Series> {
     let (s_series, k_series, t_series, vol_series, r_series_raw, q_series_raw, is_call_series) = (
         inputs[0].f64()?,
@@ -184,10 +175,7 @@ pub fn calc_basic(inputs: &[Series], kwargs: GreeksKwargs) -> PolarsResult<Serie
     } else {
         q_series_raw.clone()
     };
-    let mut greeks_vec = GreeksVec::with_capacity(len);
-
-    // Determine which Greeks to calculate
-    let flags = GreeksFlags::from_kwargs(&kwargs);
+    let mut greeks_vec = GreeksVec::from_kwargs(len, &kwargs);
 
     // Single pass through all rows - calculate only requested Greeks
     s_series
@@ -216,11 +204,9 @@ pub fn calc_basic(inputs: &[Series], kwargs: GreeksKwargs) -> PolarsResult<Serie
                     OptionType::Put
                 };
 
-                let greeks = BlackScholesModel::new(s, k, t, vol, r, q)
-                    .map(|bs| greeks_from_bs(&bs, option_type, &flags))
-                    .unwrap_or_default();
-
-                greeks_vec.push(greeks);
+                if let Ok(bs) = BlackScholesModel::new(s, k, t, vol, r, q) {
+                    greeks_vec.collect_by(&bs, option_type);
+                }
             },
         );
 
